@@ -46,6 +46,8 @@ const ticketPrice = document.querySelector("#ticketPrice");
 const ticketNum = document.querySelector("#ticketNum");
 const ticketRate = document.querySelector("#ticketRate");
 const ticketDescription = document.querySelector("#ticketDescription");
+// chart c3.js
+const chart = document.querySelector("#chart");
 
 let ticketCardArea = document.querySelector(".ticketCard-area");
 const addBtn = document.querySelector(".addTicket-btn");
@@ -55,8 +57,8 @@ const regionSearch = document.querySelector(".regionSearch");
 let dataLens = document.querySelector("#searchResult-text");
 
 let empty = false;
+// 目前問題無法中斷
 function checkEmpty() {
-  // 目前問題無法中斷
   let checkInput = {
     ticketName: ticketName.value,
     ticketImgUrl: ticketImgUrl.value,
@@ -102,14 +104,21 @@ function addData() {
 
 // 過濾區域
 function filterData(option) {
+  let regionNum;
   if (option === "全部地區") {
     renderData(data);
+    // 地區數量
+    regionNum = getRegionNum(data);
+    showChart(regionNum);
     return data;
   }
   let filterData = data.filter(function (item) {
     return item.area === option;
   });
   renderData(filterData);
+  // 地區數量
+  regionNum = getRegionNum(filterData);
+  showChart(regionNum);
   return filterData;
 }
 
@@ -152,16 +161,50 @@ function renderData(data) {
   });
   ticketCardArea.innerHTML = str;
 }
-// reset 可以自己寫也可以用 form 內建 reset 方法
-// function reset() {
-//   ticketName.value = "";
-//   ticketImgUrl.value = "";
-//   ticketRegion.value = "";
-//   ticketPrice.value = "";
-//   ticketNum.value = "";
-//   ticketRate.value = "";
-//   ticketDescription.value = "";
-// }
+// 地區數量(用於圓餅圖)
+function getRegionNum(data) {
+  let regionNum = {};
+  data.forEach((item) => {
+    let count = 1;
+    if (!regionNum[item.area]) {
+      regionNum[item.area] = count;
+    } else {
+      count++;
+      regionNum[item.area] = count;
+    }
+  });
+  let regionNumArr = Object.entries(regionNum);
+  return regionNumArr;
+}
+
+// chart圓餅表
+function showChart(num) {
+  c3.generate({
+    bindto: "#chart",
+    size: {
+      width: 160,
+      height: 180,
+    },
+
+    data: {
+      columns: num,
+      type: "donut",
+      colors: {
+        台北: "#26C0C7",
+        台中: "#5151D3",
+        高雄: "#E68619",
+      },
+    },
+    donut: {
+      title: "套票地區比重",
+      width: 10,
+      expand: false,
+      label: {
+        show: false,
+      },
+    },
+  });
+}
 
 let areaStatus = "" || "全部地區";
 // btn -> 判斷有無空值 -> 添加資料 -> 渲然資料
@@ -174,8 +217,15 @@ addBtn.addEventListener("click", function () {
   filterData(areaStatus);
 });
 
+// 選擇地區監聽
 regionSearch.addEventListener("change", function (e) {
   areaStatus = e.target.value;
   let filterResult = filterData(areaStatus);
   renderData(filterResult);
 });
+
+function init() {
+  let regionNum = getRegionNum(data);
+  showChart(regionNum);
+}
+init();
